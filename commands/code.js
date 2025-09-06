@@ -10,21 +10,21 @@ const dataPath = path.join(__dirname, '..', 'data');
 
 export const data = new SlashCommandBuilder()
   .setName('code')
-  .setDescription('Dodaje nowy kod promocyjny Kingshot')
+  .setDescription('Adds a new KingShot promotional code')
   .addStringOption(option =>
     option.setName('giftcode')
-      .setDescription('Kod promocyjny do dodania')
+      .setDescription('Promotional code to add')
       .setRequired(true))
   .addStringOption(option =>
     option.setName('description')
-      .setDescription('Opis kodu promocyjnego (opcjonalnie)')
+      .setDescription('Description of the promotional code (optional)')
       .setRequired(false))
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction, client) {
   // Sprawdzenie uprawnień
   if (!interaction.memberPermissions.has(PermissionFlagsBits.Administrator)) {
-    return interaction.reply({ content: 'Nie masz uprawnień do użycia tej komendy!', flags: MessageFlags.Ephemeral });
+    return interaction.reply({ content: 'You do not have permission to use this command!', flags: MessageFlags.Ephemeral });
   }
 
   const guildId = interaction.guild.id;
@@ -33,7 +33,7 @@ export async function execute(interaction, client) {
   // Sprawdzenie czy kanał został skonfigurowany
   if (!guildSettings || !guildSettings.channelId) {
     return interaction.reply({ 
-      content: 'Najpierw skonfiguruj kanał do udostępniania kodów używając komendy `/setup`!', 
+      content: 'First configure a channel for sharing codes using the `/setup` command!', 
       flags: MessageFlags.Ephemeral 
     });
   }
@@ -43,7 +43,7 @@ export async function execute(interaction, client) {
 
   if (!channel) {
     return interaction.reply({ 
-      content: 'Skonfigurowany kanał nie istnieje! Użyj komendy `/setup` aby skonfigurować nowy kanał.', 
+      content: 'The configured channel does not exist! Use the `/setup` command to configure a new channel.', 
       flags: MessageFlags.Ephemeral 
     });
   }
@@ -52,7 +52,7 @@ export async function execute(interaction, client) {
   const permissions = channel.permissionsFor(interaction.client.user);
   if (!permissions.has(PermissionFlagsBits.SendMessages) || !permissions.has(PermissionFlagsBits.ViewChannel)) {
     return interaction.reply({ 
-      content: 'Bot nie ma wystarczających uprawnień do wysyłania wiadomości na skonfigurowanym kanale!', 
+      content: 'The bot does not have sufficient permissions to send messages on the configured channel!', 
       flags: MessageFlags.Ephemeral 
     });
   }
@@ -68,26 +68,26 @@ export async function execute(interaction, client) {
     const result = await addGiftCode(giftcode, description);
 
     if (!result.success) {
-      return interaction.editReply(`Nie udało się dodać kodu promocyjnego: ${result.reason}`);
+      return interaction.editReply(`Failed to add promotional code: ${result.reason}`);
     }
 
     // Utworzenie embeda z kodem promocyjnym
     const embed = new EmbedBuilder()
       .setColor('#0099ff')
-      .setTitle(`Kod promocyjny: ${result.code.code}`)
+      .setTitle(`Promotional Code: ${result.code.code}`)
       .setDescription(result.code.description)
       .addFields(
-        { name: 'Nagrody', value: result.code.rewards },
-        { name: 'Ważny do', value: new Date(result.code.validUntil).toLocaleDateString() }
+        { name: 'Rewards', value: result.code.rewards },
+        { name: 'Valid until', value: new Date(result.code.validUntil).toLocaleDateString('en-US') }
       )
       .setTimestamp();
 
     // Wysłanie kodu na skonfigurowany kanał
     await channel.send({ embeds: [embed] });
 
-    await interaction.editReply(`Pomyślnie dodano kod promocyjny ${giftcode} i udostępniono go na kanale ${channel}.`);
+    await interaction.editReply(`Successfully added promotional code ${giftcode} and shared it on channel ${channel}.`);
   } catch (error) {
-    console.error('Błąd podczas dodawania kodu promocyjnego:', error);
-    await interaction.editReply('Wystąpił błąd podczas dodawania kodu promocyjnego.');
+    console.error('Error adding promotional code:', error);
+    await interaction.editReply('An error occurred while adding the promotional code.');
   }
 }

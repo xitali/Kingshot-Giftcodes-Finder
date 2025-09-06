@@ -1,4 +1,4 @@
-// Moduł do zarządzania kodami promocyjnymi Kingshot
+// Module for managing KingShot promotional codes
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 const dataPath = path.join(__dirname, '..', 'data');
 const codesFilePath = path.join(dataPath, 'codes.json');
 
-// Inicjalizacja pliku z kodami, jeśli nie istnieje
+// Initialize codes file if it doesn't exist
 if (!fs.existsSync(dataPath)) {
   fs.mkdirSync(dataPath, { recursive: true });
 }
@@ -19,26 +19,26 @@ if (!fs.existsSync(codesFilePath)) {
 }
 
 /**
- * Funkcja do wyszukiwania aktywnych kodów promocyjnych gry Kingshot
- * W rzeczywistej implementacji należałoby połączyć się z API gry lub innym źródłem danych
- * @returns {Promise<Array>} - Tablica znalezionych kodów promocyjnych
+ * Function for searching active KingShot promotional codes
+ * In a real implementation, this would connect to the game API or other data source
+ * @returns {Promise<Array>} - Array of found promotional codes
  */
 export async function searchGiftCodes() {
   try {
-    // Odczytanie kodów z pliku
+    // Read codes from file
     let savedCodes = [];
     if (fs.existsSync(codesFilePath)) {
        try {
          savedCodes = JSON.parse(fs.readFileSync(codesFilePath, 'utf8'));
        } catch (error) {
-         console.error('Błąd podczas odczytu pliku z kodami:', error);
+         console.error('Error reading codes file:', error);
        }
      }
     
-    // Symulacja opóźnienia odpowiedzi z API
+    // Simulate API response delay
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Przykładowe kody z różnymi datami ważności (tylko jeśli nie ma zapisanych kodów)
+    // Example codes with different expiration dates (only if there are no saved codes)
     if (savedCodes.length === 0) {
       const currentDate = new Date();
       const tomorrow = new Date(currentDate);
@@ -53,50 +53,50 @@ export async function searchGiftCodes() {
       savedCodes = [
         {
           code: 'KINGSHOT2023',
-          description: 'Kod promocyjny na 1000 monet',
+          description: 'Promotional code for 1000 coins',
           validUntil: nextWeek.toISOString(),
-          rewards: '1000 monet'
+          rewards: '1000 coins'
         },
         {
           code: 'NEWPLAYER',
-          description: 'Kod promocyjny dla nowych graczy',
+          description: 'Promotional code for new players',
           validUntil: tomorrow.toISOString(),
-          rewards: 'Specjalna skórka broni'
+          rewards: 'Special weapon skin'
         },
         {
           code: 'EXPIRED',
-          description: 'Kod promocyjny, który wygasł',
+          description: 'Expired promotional code',
           validUntil: yesterday.toISOString(),
-          rewards: '500 monet'
+          rewards: '500 coins'
         }
       ];
       
-      // Zapisanie przykładowych kodów do pliku
+      // Save example codes to file
       fs.writeFileSync(codesFilePath, JSON.stringify(savedCodes, null, 2));
     }
     
     return savedCodes;
   } catch (error) {
-    console.error('Błąd podczas wyszukiwania kodów promocyjnych:', error);
+    console.error('Error searching for promotional codes:', error);
     return [];
   }
 }
 
 /**
- * Funkcja do weryfikacji ważności kodu promocyjnego
- * @param {string} code - Kod promocyjny do sprawdzenia
- * @returns {Promise<Object>} - Obiekt zawierający informacje o kodzie
+ * Function to verify the validity of a promotional code
+ * @param {string} code - Promotional code to check
+ * @returns {Promise<Object>} - Object containing information about the code
  */
 export async function verifyGiftCode(code) {
   try {
-    // W rzeczywistej implementacji tutaj byłoby połączenie z API gry
-    // Na potrzeby demonstracji sprawdzamy w przykładowych kodach
+    // In a real implementation, there would be a connection to the game API here
+    // For demonstration purposes, we check in example codes
     
     const codes = await searchGiftCodes();
     const foundCode = codes.find(c => c.code === code);
     
     if (!foundCode) {
-      return { valid: false, reason: 'Kod nie istnieje' };
+      return { valid: false, reason: 'Code does not exist' };
     }
     
     const validUntil = new Date(foundCode.validUntil);
@@ -105,7 +105,7 @@ export async function verifyGiftCode(code) {
     if (validUntil < currentDate) {
       return { 
         valid: false, 
-        reason: 'Kod wygasł', 
+        reason: 'Code expired', 
         validUntil: foundCode.validUntil,
         description: foundCode.description,
         rewards: foundCode.rewards
@@ -119,21 +119,21 @@ export async function verifyGiftCode(code) {
       rewards: foundCode.rewards
     };
   } catch (error) {
-    console.error('Błąd podczas weryfikacji kodu promocyjnego:', error);
-    return { valid: false, reason: 'Błąd weryfikacji' };
+    console.error('Error verifying promotional code:', error);
+    return { valid: false, reason: 'Verification error' };
   }
 }
 
 /**
- * Funkcja do dodawania nowego kodu promocyjnego
- * @param {string} code - Kod promocyjny
- * @param {string} description - Opis kodu (opcjonalny)
- * @returns {Promise<Object>} - Obiekt zawierający informacje o dodanym kodzie
+ * Function to add a new promotional code
+ * @param {string} code - Promotional code
+ * @param {string} description - Code description (optional)
+ * @returns {Promise<Object>} - Object containing information about the added code
  */
 /**
- * Funkcja do parsowania kodów promocyjnych ze strony axeetech.com
- * @param {string} html - Zawartość HTML strony
- * @returns {Array} - Tablica znalezionych kodów promocyjnych
+ * Function to parse promotional codes from axeetech.com
+ * @param {string} html - HTML content of the page
+ * @returns {Array} - Array of found promotional codes
  */
 async function parseAxeetechCodes(html) {
   const codes = [];
@@ -179,7 +179,7 @@ async function parseAxeetechCodes(html) {
             // Jeśli znaleziono datę ważności, ustawiamy ją
             const dateStr = validUntilMatch[1] + validUntilMatch[2];
             validUntil = new Date(dateStr);
-            rewards = 'Nagroda za kod promocyjny';
+            rewards = 'Reward for promotional code';
           } else {
             // W przeciwnym razie ustawiamy domyślną datę ważności (30 dni)
             validUntil = new Date();
@@ -188,7 +188,7 @@ async function parseAxeetechCodes(html) {
           
           codes.push({
             code,
-            description: `Kod promocyjny ze strony axeetech.com`,
+            description: `Promotional code from axeetech.com`,
             validUntil: validUntil.toISOString(),
             rewards
           });
@@ -196,18 +196,18 @@ async function parseAxeetechCodes(html) {
       }
     }
     
-    console.log(`Znaleziono ${codes.length} kodów promocyjnych z axeetech.com`);
+    console.log(`Found ${codes.length} promotional codes from axeetech.com`);
   } catch (error) {
-    console.error('Błąd podczas parsowania kodów z axeetech.com:', error);
+    console.error('Error parsing codes from axeetech.com:', error);
   }
   
   return codes;
 }
 
 /**
- * Funkcja do parsowania kodów promocyjnych ze strony boostbot.org
- * @param {string} html - Zawartość HTML strony
- * @returns {Array} - Tablica znalezionych kodów promocyjnych
+ * Function to parse promotional codes from boostbot.org
+ * @param {string} html - HTML content of the page
+ * @returns {Array} - Array of found promotional codes
  */
 async function parseBoostbotCodes(html) {
   const codes = [];
@@ -249,7 +249,7 @@ async function parseBoostbotCodes(html) {
           
           codes.push({
             code,
-            description: `Kod promocyjny ze strony boostbot.org`,
+            description: `Promotional code from boostbot.org`,
             validUntil: validUntil.toISOString(),
             rewards: rewardInfo
           });
@@ -257,24 +257,24 @@ async function parseBoostbotCodes(html) {
       }
     }
     
-    console.log(`Znaleziono ${codes.length} kodów promocyjnych z boostbot.org`);
+    console.log(`Found ${codes.length} promotional codes from boostbot.org`);
   } catch (error) {
-    console.error('Błąd podczas parsowania kodów z boostbot.org:', error);
+    console.error('Error parsing codes from boostbot.org:', error);
   }
   
   return codes;
 }
 
 /**
- * Funkcja do pobierania kodów promocyjnych ze stron internetowych
- * @returns {Promise<Array>} - Tablica znalezionych kodów promocyjnych
+ * Function to fetch promotional codes from websites
+ * @returns {Promise<Array>} - Array of found promotional codes
  */
 export async function fetchCodesFromWebsite() {
   const allCodes = [];
   
   try {
-    // Pobieranie kodów z axeetech.com
-    console.log('Pobieranie kodów promocyjnych ze strony axeetech.com...');
+    // Fetching codes from axeetech.com
+    console.log('Fetching promotional codes from axeetech.com...');
     const axeetechResponse = await fetch('https://axeetech.com/kingshot-gift-codes/');
     
     if (axeetechResponse.ok) {
@@ -282,11 +282,11 @@ export async function fetchCodesFromWebsite() {
       const axeetechCodes = await parseAxeetechCodes(axeetechHtml);
       allCodes.push(...axeetechCodes);
     } else {
-      console.error(`Błąd HTTP przy pobieraniu z axeetech.com: ${axeetechResponse.status}`);
+      console.error(`HTTP error when fetching from axeetech.com: ${axeetechResponse.status}`);
     }
     
-    // Pobieranie kodów z boostbot.org
-    console.log('Pobieranie kodów promocyjnych ze strony boostbot.org...');
+    // Fetching codes from boostbot.org
+    console.log('Fetching promotional codes from boostbot.org...');
     const boostbotResponse = await fetch('https://boostbot.org/blog/kingshot-gift-codes/');
     
     if (boostbotResponse.ok) {
@@ -294,10 +294,10 @@ export async function fetchCodesFromWebsite() {
       const boostbotCodes = await parseBoostbotCodes(boostbotHtml);
       allCodes.push(...boostbotCodes);
     } else {
-      console.error(`Błąd HTTP przy pobieraniu z boostbot.org: ${boostbotResponse.status}`);
+      console.error(`HTTP error when fetching from boostbot.org: ${boostbotResponse.status}`);
     }
     
-    // Usuwanie duplikatów kodów
+    // Removing duplicate codes
     const uniqueCodes = [];
     const codeSet = new Set();
     
@@ -308,17 +308,17 @@ export async function fetchCodesFromWebsite() {
       }
     }
     
-    console.log(`Łącznie znaleziono ${uniqueCodes.length} unikalnych kodów promocyjnych`);
+    console.log(`Found a total of ${uniqueCodes.length} unique promotional codes`);
     return uniqueCodes;
   } catch (error) {
-    console.error('Błąd podczas pobierania kodów ze strony:', error);
+    console.error('Error fetching codes from website:', error);
     return [];
   }
 }
 
 /**
- * Funkcja do synchronizacji kodów promocyjnych z zewnętrznej strony
- * @returns {Promise<Object>} - Obiekt zawierający informacje o synchronizacji
+ * Function to synchronize promotional codes from external website
+ * @returns {Promise<Object>} - Object containing synchronization information
  */
 export async function syncCodesFromWebsite() {
   try {
@@ -326,25 +326,36 @@ export async function syncCodesFromWebsite() {
     const websiteCodes = await fetchCodesFromWebsite();
     
     if (websiteCodes.length === 0) {
-      return { success: false, reason: 'Nie znaleziono kodów na stronie' };
+      return { success: false, reason: 'No codes found on the website' };
     }
     
-    // Odczytanie istniejących kodów
+    // Reading existing codes
     let existingCodes = [];
     if (fs.existsSync(codesFilePath)) {
       try {
-        existingCodes = JSON.parse(fs.readFileSync(codesFilePath, 'utf8'));
+        const fileContent = fs.readFileSync(codesFilePath, 'utf8');
+        if (fileContent && fileContent.trim()) {
+          existingCodes = JSON.parse(fileContent);
+        }
       } catch (error) {
-        console.error('Błąd podczas odczytu pliku z kodami:', error);
+        console.error('Error reading codes file:', error);
+        // Create backup of corrupted file
+        const backupPath = `${codesFilePath}.backup-${Date.now()}`;
+        try {
+          fs.copyFileSync(codesFilePath, backupPath);
+          console.log(`Created backup of corrupted codes file at ${backupPath}`);
+        } catch (backupError) {
+          console.error('Failed to create backup of corrupted codes file:', backupError);
+        }
       }
     }
     
-    // Filtrowanie tylko nowych kodów
+    // Filtering only new codes
     const existingCodeValues = existingCodes.map(c => c.code);
     const newCodes = websiteCodes.filter(c => !existingCodeValues.includes(c.code));
     
     if (newCodes.length === 0) {
-      return { success: true, added: 0, message: 'Wszystkie kody są już dodane' };
+      return { success: true, added: 0, message: 'All codes are already added' };
     }
     
     // Dodanie nowych kodów do istniejących
@@ -355,18 +366,18 @@ export async function syncCodesFromWebsite() {
       success: true, 
       added: newCodes.length, 
       newCodes,
-      message: `Dodano ${newCodes.length} nowych kodów promocyjnych`
+      message: `Added ${newCodes.length} new promotional codes`
     };
   } catch (error) {
-    console.error('Błąd podczas synchronizacji kodów:', error);
-    return { success: false, reason: 'Błąd synchronizacji kodów' };
+    console.error('Error synchronizing codes:', error);
+    return { success: false, reason: 'Code synchronization error' };
   }
 }
 
 export async function addGiftCode(code, description = '') {
   try {
     if (!code || typeof code !== 'string' || code.trim() === '') {
-      return { success: false, reason: 'Kod nie może być pusty' };
+      return { success: false, reason: 'Code cannot be empty' };
     }
     
     // Odczytanie istniejących kodów
@@ -375,14 +386,14 @@ export async function addGiftCode(code, description = '') {
       try {
         codes = JSON.parse(fs.readFileSync(codesFilePath, 'utf8'));
       } catch (error) {
-        console.error('Błąd podczas odczytu pliku z kodami:', error);
+        console.error('Error reading codes file:', error);
       }
     }
     
     // Sprawdzenie czy kod już istnieje
     const existingCode = codes.find(c => c.code === code);
     if (existingCode) {
-      return { success: false, reason: 'Kod już istnieje', existingCode };
+      return { success: false, reason: 'Code already exists', existingCode };
     }
     
     // Ustawienie daty ważności (domyślnie 7 dni)
@@ -393,9 +404,9 @@ export async function addGiftCode(code, description = '') {
     // Utworzenie nowego kodu
     const newCode = {
       code,
-      description: description || `Kod promocyjny: ${code}`,
+      description: description || `Promotional code: ${code}`,
       validUntil: validUntil.toISOString(),
-      rewards: 'Nagroda za kod promocyjny'
+      rewards: 'Reward for promotional code'
     };
     
     // Dodanie kodu do listy i zapisanie do pliku
@@ -404,7 +415,7 @@ export async function addGiftCode(code, description = '') {
     
     return { success: true, code: newCode };
   } catch (error) {
-    console.error('Błąd podczas dodawania kodu promocyjnego:', error);
-    return { success: false, reason: 'Błąd dodawania kodu' };
+    console.error('Error adding promotional code:', error);
+    return { success: false, reason: 'Error adding code' };
   }
 }

@@ -4,15 +4,16 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { CodeVerificationScheduler } from './utils/scheduler.js';
+import { ReminderScheduler } from './utils/reminderScheduler.js';
 
-// Konfiguracja zmiennych środowiskowych
+// Environment variables configuration
 config();
 
-// Ustawienia ścieżek
+// Path settings
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Inicjalizacja klienta Discord
+// Discord client initialization
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -22,11 +23,11 @@ const client = new Client({
   partials: [Partials.Channel, Partials.Message]
 });
 
-// Kolekcje dla komend i danych
+// Collections for commands and data
 client.commands = new Collection();
 client.guildSettings = new Map();
 
-// Ładowanie komend
+// Loading commands
 const commandsPath = path.join(__dirname, 'commands');
 if (!fs.existsSync(commandsPath)) {
   fs.mkdirSync(commandsPath, { recursive: true });
@@ -41,13 +42,13 @@ for (const file of commandFiles) {
   
   if ('data' in command && 'execute' in command) {
     client.commands.set(command.data.name, command);
-    console.log(`Załadowano komendę: ${command.data.name}`);
+    console.log(`Loaded command: ${command.data.name}`);
   } else {
-    console.log(`[UWAGA] Komenda w ${filePath} nie zawiera wymaganych właściwości "data" lub "execute"`);
+    console.log(`[WARNING] Command in ${filePath} does not contain required properties "data" or "execute"`);
   }
 }
 
-// Ładowanie ustawień serwera
+// Loading server settings
 const settingsPath = path.join(__dirname, 'data');
 if (!fs.existsSync(settingsPath)) {
   fs.mkdirSync(settingsPath, { recursive: true });
@@ -60,20 +61,20 @@ if (fs.existsSync(settingsFile)) {
     for (const [guildId, guildSettings] of Object.entries(settings)) {
       client.guildSettings.set(guildId, guildSettings);
     }
-    console.log('Załadowano ustawienia serwerów');
+    console.log('Loaded server settings');
   } catch (error) {
-    console.error('Błąd podczas ładowania ustawień:', error);
+    console.error('Error loading settings:', error);
   }
 }
 
-// Obsługa interakcji (komendy slash)
+// Handling interactions (slash commands)
 client.on(Events.InteractionCreate, async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
   const command = client.commands.get(interaction.commandName);
 
   if (!command) {
-    console.error(`Nie znaleziono komendy ${interaction.commandName}`);
+    console.error(`Command not found: ${interaction.commandName}`);
     return;
   }
 
@@ -81,17 +82,22 @@ client.on(Events.InteractionCreate, async interaction => {
     await command.execute(interaction, client);
   } catch (error) {
     console.error(error);
-    const content = { content: 'Wystąpił błąd podczas wykonywania tej komendy!', flags: MessageFlags.Ephemeral };
     
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp(content);
-    } else {
-      await interaction.reply(content);
+    try {
+      const content = { content: 'An error occurred while executing this command!', flags: MessageFlags.Ephemeral };
+      
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp(content).catch(e => console.error('Cannot send followUp:', e));
+      } else {
+        await interaction.reply(content).catch(e => console.error('Cannot send reply:', e));
+      }
+    } catch (replyError) {
+      console.error('Error while trying to respond to interaction:', replyError);
     }
   }
 });
 
-// Zapisywanie ustawień przy zamknięciu
+// Saving settings on shutdown
 process.on('SIGINT', () => saveSettings());
 process.on('SIGTERM', () => saveSettings());
 
@@ -102,18 +108,23 @@ function saveSettings() {
   }
   
   fs.writeFileSync(settingsFile, JSON.stringify(settings, null, 2));
-  console.log('Zapisano ustawienia serwerów');
+  console.log('Server settings saved');
   process.exit(0);
 }
 
-// Logowanie do Discord
+// Logging into Discord
 client.once(Events.ClientReady, () => {
-  console.log(`Zalogowano jako ${client.user.tag}`);
+  console.log(`Logged in as ${client.user.tag}`);
   
-  // Uruchomienie schedulera weryfikacji kodów
-  const scheduler = new CodeVerificationScheduler(client);
-  scheduler.start();
-  client.scheduler = scheduler;
+  // Start code verification scheduler
+  const codeScheduler = new CodeVerificationScheduler(client);
+  codeScheduler.start();
+  client.scheduler = codeScheduler;
+  
+  // Start reminder scheduler
+  const reminderScheduler = new ReminderScheduler(client);
+  reminderScheduler.start();
+  client.reminderScheduler = reminderScheduler;
 });
 
 client.login(process.env.DISCORD_TOKEN);

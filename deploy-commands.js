@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { pathToFileURL } from 'url';
 
-// Konfiguracja zmiennych środowiskowych
+// Environment variables configuration
 config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -23,7 +23,7 @@ for (const file of commandFiles) {
   if ('data' in command) {
     commands.push(command.data.toJSON());
   } else {
-    console.log(`[UWAGA] Komenda w ${filePath} nie zawiera wymaganej właściwości "data"`);
+    console.log(`[WARNING] Command in ${filePath} does not contain the required "data" property`);
   }
 }
 
@@ -31,15 +31,15 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
 (async () => {
   try {
-    console.log(`Rozpoczęto odświeżanie ${commands.length} komend aplikacji (/).`);
+    console.log(`Started refreshing ${commands.length} application commands (/).`);
 
-    // Rejestracja komend globalnie
+    // Register commands globally
     const data = await rest.put(
       Routes.applicationCommands(process.env.APPLICATION_ID),
       { body: commands },
     );
 
-    console.log(`Pomyślnie odświeżono ${data.length} komend aplikacji (/).`);
+    console.log(`Successfully refreshed ${data.length} application commands (/).`);
   } catch (error) {
     console.error(error);
   }

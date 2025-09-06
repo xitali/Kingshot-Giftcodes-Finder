@@ -10,25 +10,25 @@ const dataPath = path.join(__dirname, '..', 'data');
 
 export const data = new SlashCommandBuilder()
   .setName('codes')
-  .setDescription('Zarządza kodami promocyjnymi Kingshot')
+  .setDescription('Manages KingShot promotional codes')
   .addSubcommand(subcommand =>
     subcommand
       .setName('search')
-      .setDescription('Wyszukuje i udostępnia aktywne kody promocyjne'))
+      .setDescription('Searches and shares active promotional codes'))
   .addSubcommand(subcommand =>
     subcommand
       .setName('verify')
-      .setDescription('Weryfikuje ważność kodów promocyjnych na kanale'))
+      .setDescription('Verifies the validity of promotional codes on the channel'))
   .addSubcommand(subcommand =>
     subcommand
       .setName('sync')
-      .setDescription('Synchronizuje kody promocyjne ze strony axeetech.com'))
+      .setDescription('Synchronizes promotional codes from axeetech.com'))
   .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages);
 
 export async function execute(interaction, client) {
   // Sprawdzenie uprawnień
   if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageMessages)) {
-    return interaction.reply({ content: 'Nie masz uprawnień do użycia tej komendy!', flags: MessageFlags.Ephemeral });
+    return interaction.reply({ content: 'You do not have permission to use this command!', flags: MessageFlags.Ephemeral });
   }
 
   const subcommand = interaction.options.getSubcommand();
@@ -38,7 +38,7 @@ export async function execute(interaction, client) {
   // Sprawdzenie czy kanał został skonfigurowany
   if (!guildSettings || !guildSettings.channelId) {
     return interaction.reply({ 
-      content: 'Najpierw skonfiguruj kanał do udostępniania kodów używając komendy `/setup`!', 
+      content: 'First configure a channel for sharing codes using the `/setup` command!', 
       flags: MessageFlags.Ephemeral 
     });
   }
@@ -48,7 +48,7 @@ export async function execute(interaction, client) {
 
   if (!channel) {
     return interaction.reply({ 
-      content: 'Skonfigurowany kanał nie istnieje! Użyj komendy `/setup` aby skonfigurować nowy kanał.', 
+      content: 'The configured channel does not exist! Use the `/setup` command to configure a new channel.', 
       flags: MessageFlags.Ephemeral 
     });
   }
@@ -57,7 +57,7 @@ export async function execute(interaction, client) {
   const permissions = channel.permissionsFor(interaction.client.user);
   if (!permissions.has(PermissionFlagsBits.SendMessages) || !permissions.has(PermissionFlagsBits.ViewChannel)) {
     return interaction.reply({ 
-      content: 'Bot nie ma wystarczających uprawnień do wysyłania wiadomości na skonfigurowanym kanale!', 
+      content: 'The bot does not have sufficient permissions to send messages on the configured channel!', 
       flags: MessageFlags.Ephemeral 
     });
   }
@@ -70,28 +70,28 @@ export async function execute(interaction, client) {
       const validCodes = codes.filter(code => new Date(code.validUntil) > new Date());
       
       if (validCodes.length === 0) {
-        return interaction.editReply('Nie znaleziono aktywnych kodów promocyjnych.');
+        return interaction.editReply('No active promotional codes found.');
       }
       
       // Wysyłanie kodów na skonfigurowany kanał
       for (const code of validCodes) {
         const embed = new EmbedBuilder()
           .setColor('#0099ff')
-          .setTitle(`Kod promocyjny: ${code.code}`)
+          .setTitle(`Promotional Code: ${code.code}`)
           .setDescription(code.description)
           .addFields(
-            { name: 'Nagrody', value: code.rewards },
-            { name: 'Ważny do', value: new Date(code.validUntil).toLocaleDateString() }
+            { name: 'Rewards', value: code.rewards },
+            { name: 'Valid until', value: new Date(code.validUntil).toLocaleDateString('en-US') }
           )
           .setTimestamp();
         
         await channel.send({ embeds: [embed] });
       }
       
-      await interaction.editReply(`Pomyślnie udostępniono ${validCodes.length} aktywnych kodów promocyjnych na kanale ${channel}.`);
+      await interaction.editReply(`Successfully shared ${validCodes.length} active promotional codes on channel ${channel}.`);
     } catch (error) {
-      console.error('Błąd podczas wyszukiwania kodów:', error);
-      await interaction.editReply('Wystąpił błąd podczas wyszukiwania kodów promocyjnych.');
+      console.error('Error searching for codes:', error);
+      await interaction.editReply('An error occurred while searching for promotional codes.');
     }
   } else if (subcommand === 'verify') {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -106,7 +106,7 @@ export async function execute(interaction, client) {
         // Sprawdzanie tylko wiadomości wysłanych przez bota z embedami
         if (message.author.id === client.user.id && message.embeds.length > 0) {
           const embed = message.embeds[0];
-          const titleMatch = embed.title?.match(/Kod promocyjny: ([\w\d]+)/);
+          const titleMatch = embed.title?.match(/Promotional Code: ([\w\d]+)/);
           
           if (titleMatch && titleMatch[1]) {
             const code = titleMatch[1];
@@ -115,7 +115,7 @@ export async function execute(interaction, client) {
             if (!verification.valid) {
               // Usuwanie wygasłych kodów
               await message.delete().catch(error => {
-                console.error(`Nie można usunąć wiadomości: ${error}`);
+                console.error(`Cannot delete message: ${error}`);
               });
               expiredCount++;
             } else {
@@ -125,10 +125,10 @@ export async function execute(interaction, client) {
         }
       }
       
-      await interaction.editReply(`Weryfikacja zakończona. Zweryfikowano ${verifiedCount} aktywnych kodów, usunięto ${expiredCount} wygasłych kodów.`);
+      await interaction.editReply(`Verification completed. Verified ${verifiedCount} active codes, removed ${expiredCount} expired codes.`);
     } catch (error) {
-      console.error('Błąd podczas weryfikacji kodów:', error);
-      await interaction.editReply('Wystąpił błąd podczas weryfikacji kodów promocyjnych.');
+      console.error('Error verifying codes:', error);
+      await interaction.editReply('An error occurred while verifying promotional codes.');
     }
   } else if (subcommand === 'sync') {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -137,7 +137,7 @@ export async function execute(interaction, client) {
       const result = await syncCodesFromWebsite();
       
       if (!result.success) {
-        return interaction.editReply(`Nie udało się zsynchronizować kodów: ${result.reason}`);
+        return interaction.editReply(`Failed to synchronize codes: ${result.reason}`);
       }
       
       if (result.added === 0) {
@@ -148,22 +148,21 @@ export async function execute(interaction, client) {
       for (const code of result.newCodes) {
         const embed = new EmbedBuilder()
           .setColor('#00ff00')
-          .setTitle(`Kod promocyjny: ${code.code}`)
+          .setTitle(`Promotional Code: ${code.code}`)
           .setDescription(code.description)
           .addFields(
-            { name: 'Nagrody', value: code.rewards },
-            { name: 'Ważny do', value: new Date(code.validUntil).toLocaleDateString() }
+            { name: 'Rewards', value: code.rewards },
+            { name: 'Valid until', value: new Date(code.validUntil).toLocaleDateString('en-US') }
           )
-          .setFooter({ text: 'Kod pobrany ze strony axeetech.com' })
-          .setTimestamp();
+          .setFooter({ text: 'Code retrieved from axeetech.com' });
         
         await channel.send({ embeds: [embed] });
       }
       
-      await interaction.editReply(`${result.message}. Kody zostały opublikowane na kanale ${channel}.`);
+      await interaction.editReply(`${result.message}. Codes have been published on channel ${channel}.`);
     } catch (error) {
-      console.error('Błąd podczas synchronizacji kodów:', error);
-      await interaction.editReply('Wystąpił błąd podczas synchronizacji kodów promocyjnych.');
+      console.error('Error synchronizing codes:', error);
+      await interaction.editReply('An error occurred while synchronizing promotional codes.');
     }
   }
 }
