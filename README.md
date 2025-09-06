@@ -1,6 +1,6 @@
 # KingShot Discord Bot
 
-Bot Discord do zarządzania kodami promocyjnymi gry Kingshot. Bot umożliwia wyszukiwanie aktywnych kodów promocyjnych, udostępnianie ich na wybranym kanale oraz automatyczne usuwanie wygasłych kodów.
+Bot Discord do zarządzania kodami promocyjnymi gry Kingshot. Bot umożliwia wyszukiwanie aktywnych kodów promocyjnych, udostępnianie ich na wybranym kanale oraz automatyczne usuwanie wygasłych kodów. Dodatkowo bot oferuje system przypomnień o arenie i pułapkach na niedźwiedzie.
 
 ## Funkcje
 
@@ -8,6 +8,8 @@ Bot Discord do zarządzania kodami promocyjnymi gry Kingshot. Bot umożliwia wys
 - Udostępnianie kodów na wybranym kanale
 - Weryfikacja ważności kodów i automatyczne usuwanie wygasłych
 - Konfiguracja kanału do udostępniania kodów przez administratorów
+- System przypomnień o arenie (automatyczne przypomnienia o 23:30 UTC 0)
+- System przypomnień o pułapkach na niedźwiedzie (konfigurowalne przez administratorów)
 
 ## Wymagane uprawnienia bota
 
@@ -99,8 +101,31 @@ Administratorzy mogą ręcznie dodawać nowe kody promocyjne:
 
 Dodany kod zostanie automatycznie udostępniony na skonfigurowanym kanale.
 
+### System przypomnień
+
+#### Przypomnienia o arenie
+
+Bot automatycznie wysyła przypomnienia o arenie o godzinie 23:30 UTC 0 na skonfigurowanym kanale.
+
+#### Przypomnienia o pułapkach na niedźwiedzie
+
+Administratorzy mogą ustawić przypomnienia o pułapkach na niedźwiedzie:
+
+```
+/reminder beartrap time:[czas w formacie HH:MM] frequency:[częstotliwość w dniach] startfrom:[opcjonalnie - data początkowa w formacie DD.MM.YYYY]
+```
+
+Przykład:
+```
+/reminder beartrap time:22:00 frequency:2
+```
+
+Ustawia przypomnienie o pułapkach na niedźwiedzie o godzinie 22:00 UTC 0 co 2 dni.
+
 ## Rozwiązywanie problemów
 
 - **Bot nie odpowiada na komendy** - Upewnij się, że bot jest online i ma odpowiednie uprawnienia na serwerze
 - **Bot nie może wysyłać wiadomości** - Sprawdź czy bot ma uprawnienia do wysyłania wiadomości na skonfigurowanym kanale
 - **Komendy slash nie działają** - Upewnij się, że komendy zostały poprawnie zarejestrowane za pomocą `deploy-commands.js`
+- **Przypomnienia nie są wysyłane** - Sprawdź czy bot ma uprawnienia do wysyłania wiadomości na skonfigurowanym kanale oraz czy serwer, na którym działa bot, ma poprawnie ustawioną strefę czasową
+- **Nieprawidłowy format czasu w przypomnieniach** - Upewnij się, że używasz formatu 24-godzinnego (HH:MM) dla parametru time oraz formatu DD.MM.YYYY dla parametru startfrom
